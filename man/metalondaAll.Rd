@@ -2,14 +2,15 @@
 % Please edit documentation in R/Metalonda.R
 \name{metalondaAll}
 \alias{metalondaAll}
-\title{Metagenomic Longitudinal Differential Abundant Analysis for all features}
+\title{Metagenomic Longitudinal Differential Abundance Analysis for all Features}
 \usage{
-metalondaAll(data, Time, Group, ID, n.perm = 10, log = FALSE,
-  fit.method = "nbinomial", points, parall = FALSE,
-  pvalue_threshold = 0.05, adjust.method = "BH")
+metalondaAll(Count, Time, Group, ID, n.perm = 500, fit.method = "nbinomial",
+  num.intervals = 100, parall = FALSE, pvalue.threshold = 0.05,
+  adjust.method = "BH", time.unit = "days", norm.method = "none",
+  prefix = "Output")
 }
 \arguments{
-\item{data}{Count matrix of all features}
+\item{Count}{Count matrix of all features}
 
 \item{Time}{Time label of all samples}
 
@@ -19,24 +20,29 @@ metalondaAll(data, Time, Group, ID, n.perm = 10, log = FALSE,
 
 \item{n.perm}{number of permutations}
 
-\item{log}{log transformation of the data}
-
 \item{fit.method}{The fitting method (NB, LOWESS)}
 
-\item{points}{The points at which the prediction should happen}
+\item{num.intervals}{The number of time intervals at which metalonda test differential abundance}
 
 \item{parall}{logic to indicate whether to use multicore}
 
-\item{pvalue_threshold}{p-value threshold cutoff}
+\item{pvalue.threshold}{p-value threshold cutoff}
 
 \item{adjust.method}{Multiple testing correction methods}
+
+\item{time.unit}{time unit used in the Time vector (days, weeks, months, etc.)}
+
+\item{norm.method}{normalization method to be used to normalize count matrix (CSS, median-ratio, etc.)}
+
+\item{prefix}{prefix for the output figure}
 }
 \value{
 Returns a list of the significant features a long with their significant time intervals
 }
 \description{
-Find significant features and their time interval
+Identify significant features and their significant time interval
 }
 \references{
 Ahmed Metwally (ametwa2@uic.edu)
 }
+

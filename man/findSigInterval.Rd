@@ -2,25 +2,29 @@
 % Please edit documentation in R/CurveFitting.R
 \name{findSigInterval}
 \alias{findSigInterval}
-\title{Find Significant Time Intervals}
+\title{Find significant time intervals}
 \usage{
-findSigInterval(adjusted_pvalue, threshold = 0.05)
+findSigInterval(adjusted.pvalue, threshold = 0.05, sign)
 }
 \arguments{
-\item{adjusted_pvalue}{vector of adjested p-value}
+\item{adjusted.pvalue}{vector of the adjusted p-value}
 
-\item{threshold}{p_value cut off}
+\item{threshold}{p-value cut off}
+
+\item{sign}{vector hold area sign of each time interval}
 }
 \value{
 returns a list of the start and end points of all significant time intervals
 }
 \description{
-Identify the significant time intervals
+Identify significant time intervals
 }
 \examples{
-p=c(0.04, 0.01, 0.02, 0.04, 0.06, 0.2, 0.06, 0.04)
-findSigInterval(p, threshold = 0.05)
+p = c(0.04, 0.01, 0.02, 0.04, 0.06, 0.2, 0.06, 0.04)
+sign = c(1, 1, 1, 1, -1, -1, 1, 1)
+findSigInterval(p, threshold = 0.05, sign)
 }
 \references{
 Ahmed Metwally (ametwa2@uic.edu)
 }
+

@@ -2,7 +2,7 @@
 % Please edit documentation in R/CurveFitting.R
 \name{areaPermutation}
 \alias{areaPermutation}
-\title{Calculate Area Ratio of time intervals for all permutations}
+\title{Calculate Area Ratio (AR) of each feature's time interval for all permutations}
 \usage{
 areaPermutation(perm)
 }
@@ -32,3 +32,4 @@ areaPermutation(perm)
 \references{
 Ahmed Metwally (ametwa2@uic.edu)
 }
+

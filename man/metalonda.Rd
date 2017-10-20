@@ -4,40 +4,40 @@
 \alias{metalonda}
 \title{Metagenomic Longitudinal Differential Abundant Analysis for one feature}
 \usage{
-metalonda(Count, Time, Group, ID, n.perm = 10, log = FALSE,
-  fit.method = "nbinomial", points, text = 0, parall = FALSE,
-  pvalue_threshold = 0.05, adjust.method = "BH")
+metalonda(Count, Time, Group, ID, n.perm = 500, fit.method = "nbinomial",
+  points, text = 0, parall = FALSE, pvalue.threshold = 0.05,
+  adjust.method = "BH", time.unit = "days")
 }
 \arguments{
-\item{Count}{Count of feature for all groups for all time points for all samples.}
+\item{Count}{matrix has the number of reads that mapped to each feature in each sample.}
 
-\item{Time}{Time label of all samples.}
+\item{Time}{vector of the time label of each sample.}
 
-\item{Group}{Group label of all samples.}
+\item{Group}{vector of the group label of each sample.}
 
-\item{ID}{individual ID label for samples.}
+\item{ID}{vector of the subject ID label of each sample.}
 
 \item{n.perm}{number of permutations.}
 
-\item{log}{log transformation of the data.}
+\item{fit.method}{fitting method (NB, LOWESS).}
 
-\item{fit.method}{The fitting method (NB, LOWESS).}
-
-\item{points}{The points at which the prediction should happen.}
+\item{points}{points at which the prediction should happen.}
 
 \item{text}{Feature's name.}
 
-\item{parall}{Logic to indicate whether to use multicore.}
+\item{parall}{boolean to indicate whether to use multicore.}
 
-\item{pvalue_threshold}{p_value threshold cutoff.}
+\item{pvalue.threshold}{p-value threshold cutoff for identifing significant time intervals.}
 
-\item{adjust.method}{multiple testing correction methods.}
+\item{adjust.method}{multiple testing correction method.}
+
+\item{time.unit}{time unit used in the Time vector (days, weeks, months, etc.)}
 }
 \value{
-Returns a list of the significant time intervals for the tested feature.
+eeturns a list of the significant time intervals for the tested feature.
 }
 \description{
-Find significant time interval of the tested feature
+Find significant time intervals of the feature
 }
 \examples{
 data(metalonda_test_data)
@@ -49,9 +49,10 @@ Time = rep(rep(1:n.timepoints, times = n.sample), 2)
 ID = factor(rep(1:(2*n.sample), each = n.timepoints))
 points = seq(1, 10, length.out = 10)
 output_1_nbinomial = metalonda(Count = metalonda_test_data[1,], Time = Time, Group = Group,
-ID = ID, log = log, fit.method =  "nbinomial", n.perm = 10, points = points,
-text=rownames(metalonda_test_data)[1], parall = FALSE, pvalue_threshold=0.05, adjust.method="BH")
+ID = ID, fit.method =  "nbinomial", n.perm = 10, points = points,
+text=rownames(metalonda_test_data)[1], parall = FALSE, pvalue.threshold=0.05, adjust.method="BH")
 }
 \references{
 Ahmed Metwally (ametwa2@uic.edu)
 }
+

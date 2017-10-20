@@ -4,22 +4,24 @@
 \alias{permutation}
 \title{Permute group labels}
 \usage{
-permutation(permDat, n.perm = 10, method = "nbinomial", points)
+permutation(perm.dat, n.perm = 500, method = "nbinomial", points, lev)
 }
 \arguments{
-\item{permDat}{dataframe has the Count, Group, ID, Time}
+\item{perm.dat}{dataframe has the Count, Group, ID, Time}
 
 \item{n.perm}{number of permutations}
 
 \item{method}{The fitting method (negative binomial, LOWESS)}
 
 \item{points}{The points at which the prediction should happen}
+
+\item{lev}{the two level's name}
 }
 \value{
 returns the fitted model for all the permutations
 }
 \description{
-Permutes the group label of the samples in order to construct the empirical distibution
+Permutes the group label of the samples in order to construct the AR empirical distibution
 }
 \examples{
 data(metalonda_test_data)
@@ -31,9 +33,10 @@ Group = factor(c(rep(0,n.sample*n.timepoints), rep(1,n.sample*n.timepoints)))
 Time = rep(rep(1:n.timepoints, times = n.sample), 2)
 ID = factor(rep(1:(2*n.sample), each = n.timepoints))
 points = seq(1, 10, length.out = 10)
-aggretage.df = data.frame(Count = metalonda_test_data[1,], Time = Time, Group = Group, ID = ID)
-permutation(aggretage.df, n.perm = 3, method = "nbinomial", points)
+aggregate.df = data.frame(Count = metalonda_test_data[1,], Time = Time, Group = Group, ID = ID)
+permutation(aggregate.df, n.perm = 3, method = "nbinomial", points)
 }
 \references{
 Ahmed Metwally (ametwa2@uic.edu)
 }
+

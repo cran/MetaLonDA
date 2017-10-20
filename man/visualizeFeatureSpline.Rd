@@ -2,9 +2,9 @@
 % Please edit documentation in R/Visualization.R
 \name{visualizeFeatureSpline}
 \alias{visualizeFeatureSpline}
-\title{Visualize Feature with the fitted Splines}
+\title{Visualize the feature trajectory with the fitted Splines}
 \usage{
-visualizeFeatureSpline(df, model, method, text, group_levels)
+visualizeFeatureSpline(df, model, method, text, group.levels, unit = "days")
 }
 \arguments{
 \item{df}{dataframe has the Count , Group, ID, Time}
@@ -15,7 +15,9 @@ visualizeFeatureSpline(df, model, method, text, group_levels)
 
 \item{text}{feature name}
 
-\item{group_levels}{The two levels name}
+\item{group.levels}{The two level's name}
+
+\item{unit}{time unit used in the Time vector (days, weeks, months, etc.)}
 }
 \description{
 Plot the longitudinal features along with the fitted splines
@@ -23,3 +25,4 @@ Plot the longitudinal features along with the fitted splines
 \references{
 Ahmed Metwally (ametwa2@uic.edu)
 }
+

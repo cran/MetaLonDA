@@ -4,17 +4,19 @@
 \alias{visualizeFeature}
 \title{Visualize Longitudinal Feature}
 \usage{
-visualizeFeature(df, text, group_levels)
+visualizeFeature(df, text, group.levels, unit = "days")
 }
 \arguments{
 \item{df}{dataframe has the Count, Group, ID, Time}
 
 \item{text}{feature name}
 
-\item{group_levels}{The two level's name}
+\item{group.levels}{The two level's name}
+
+\item{unit}{time interval unit}
 }
 \description{
-It starts by finding by walking up the path until it finds the
+Visualize Longitudinal Feature
 }
 \examples{
 data(metalonda_test_data)
@@ -25,9 +27,10 @@ Group = factor(c(rep(0,n.sample*n.timepoints), rep(1,n.sample*n.timepoints)))
 Time = rep(rep(1:n.timepoints, times = n.sample), 2)
 ID = factor(rep(1:(2*n.sample), each = n.timepoints))
 points = seq(1, 10, length.out = 10)
-aggretage.df = data.frame(Count = metalonda_test_data[1,], Time = Time, Group = Group, ID = ID)
-visualizeFeature(aggretage.df, text = rownames(metalonda_test_data)[1], Group)
+aggregate.df = data.frame(Count = metalonda_test_data[1,], Time = Time, Group = Group, ID = ID)
+visualizeFeature(aggregate.df, text = rownames(metalonda_test_data)[1], Group)
 }
 \references{
 Ahmed Metwally (ametwa2@uic.edu)
 }
+

@@ -2,18 +2,21 @@
 % Please edit documentation in R/Visualization.R
 \name{visualizeARHistogram}
 \alias{visualizeARHistogram}
-\title{Visualize histogram of the Area Ratio}
+\title{Visualize Area Ratio (AR) empirical distribution}
 \usage{
-visualizeARHistogram(permuted, text)
+visualizeARHistogram(permuted, text, method)
 }
 \arguments{
 \item{permuted}{Permutation of the permuted data}
 
 \item{text}{Feature name}
+
+\item{method}{fitting method}
 }
 \description{
-Visualize histogram of the Area Ratio emprical distrbition of one time interval
+Visualize Area Ratio (AR) empirical distribution for each time interval
 }
 \references{
 Ahmed Metwally (ametwa2@uic.edu)
 }
+

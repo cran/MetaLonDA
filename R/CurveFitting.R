@@ -1,196 +1,194 @@
 #' Fit longitudinal data
 #'
-#' Fits longitudinal samples from the same group using Negative Binomial or LOWESS
+#' Fits longitudinal samples from the same group using negative binomial smoothing splines or LOWESS
 #' 
 #' @param df dataframe has the Count, Group, ID, Time
-#' @param log log transformation of the data
-#' @param method The fitting method (negative binomial, LOWESS)
-#' @param points The points at which the prediction should happen
-#' @return Returns the fitted model
+#' @param method fitting method (negative binomial, LOWESS)
+#' @param points points at which the prediction should happen
+#' @return returns the fitted model
 #' @import gss
 #' @import stats
 #' @references
 #' Ahmed Metwally (ametwa2@uic.edu)
 #' @examples 
+#' 
+#' 
 #' data(metalonda_test_data)
-#' n.sample = 5 # sample size;
-#' n.timepoints = 10 # time point;
-#' n.group= 2 # number of group;
-#' Group = factor(c(rep(0,n.sample*n.timepoints), rep(1,n.sample*n.timepoints)))
+#' n.sample = 5 
+#' n.timepoints = 10 
+#' n.group= 2 
+#' Group = factor(c(rep(0, n.sample*n.timepoints), rep(1, n.sample*n.timepoints)))
 #' Time = rep(rep(1:n.timepoints, times = n.sample), 2)
 #' ID = factor(rep(1:(2*n.sample), each = n.timepoints))
 #' points = seq(1, 10, length.out = 10)
 #' aggretage.df = data.frame(Count = metalonda_test_data[1,], Time = Time, Group = Group, ID = ID)
-#' curveFitting(df = aggretage.df, log = FALSE, method= "nbinomial", points)
+#' curveFitting(df = aggretage.df, method= "nbinomial", points)
 #' @export
-curveFitting <- function(df, log = FALSE, method = "nbinomial", points){
-  if(log == TRUE){
-    df$Count =  log2(df$Count+1) 
-  }
-  
+curveFitting = function(df, method = "nbinomial", points){
   
   # Seprate the two groups
-  group0 = df[df$Group==0, ]
-  group1 = df[df$Group==1, ]
-  groupNULL = df
-  
-
+  group.0 = df[df$Group==0, ]
+  group.1 = df[df$Group==1, ]
+  group.null = df
 
   ## Fitting 
-  if(method == "ss"){
+  if(method == "nbinomial"){
     # null model
-    modNULL = ssanova(Count ~ Time, data = groupNULL)
+    mod.null = gssanova(Count ~ Time, data = group.null, family = "nbinomial", skip.iter=TRUE)
     # full model
-    mod0 = ssanova(Count ~ Time, data=group0)
-    mod1 = ssanova(Count ~ Time, data=group1)
+    mod.0 = gssanova(Count ~ Time, data = group.0, family = "nbinomial", skip.iter=TRUE)
+    mod.1 = gssanova(Count ~ Time, data = group.1, family = "nbinomial", skip.iter=TRUE)
+    mod.0.nbinomial.project = project(mod.0, c("Time"))
+    mod.1.nbinomial.project = project(mod.1, c("Time"))
+    mod.null.nbinomial.project = project(mod.null, c("Time"))
   }
-  else if (method == "lowess"){
+  else if(method == "lowess"){
     # null model
-    modNULL = loess(Count ~ Time, data = groupNULL)
+    mod.null = loess(Count ~ Time, data = group.null)
     # full model
-    mod0 = loess(Count ~ Time, data = group0)
-    mod1 = loess(Count ~ Time, data = group1)
-  }
-  else if(method == "nbinomial"){
-    # null model
-    modNULL = gssanova(Count ~ Time, data = groupNULL, family = "nbinomial", skip.iter=TRUE)
-    # full model
-    mod0 = gssanova(Count ~ Time, data=group0, family = "nbinomial", skip.iter=TRUE)
-    mod1 = gssanova(Count ~ Time, data=group1, family = "nbinomial", skip.iter=TRUE)
-    mod0_nbinomial_project = project(mod0, c("Time"))
-    mod1_nbinomial_project = project(mod1, c("Time"))
-    modNULL_nbinomial_project = project(modNULL, c("Time"))
+    mod.0 = loess(Count ~ Time, data = group.0)
+    mod.1 = loess(Count ~ Time, data = group.1)
   }
   
   
-  ### Calculate goodness of fit F-statistics for the non nbinomial models
+  
+  ### Calculate goodness of fit F-statistic for the non nbinomial models
   if(method !="nbinomial")
   {
-    rssNULL = summary(modNULL)$rss
-    rssFULL = summary(mod0)$rss+summary(mod1)$rss
-    F_stat = (rssNULL-rssFULL)/rssNULL
+    rss.null = summary(mod.null)$rss
+    rss.full = summary(mod.0)$rss+summary(mod.1)$rss
+    f.stat = (rss.null - rss.full)/rss.null
   }
   
   
   ## Estimate values at the provided time points
-  estNULL = predict(modNULL,data.frame(Time = points), se=TRUE)
-  est0 = predict(mod0,data.frame(Time = points), se=TRUE)
-  est1 = predict(mod1, data.frame(Time = points), se=TRUE)
+  est.null = predict(mod.null, data.frame(Time = points), se = TRUE)
+  est.0 = predict(mod.0, data.frame(Time = points), se = TRUE)
+  est.1 = predict(mod.1, data.frame(Time = points), se = TRUE)
 
   ## prepare dataframe for plotting
   if(method != "nbinomial")
   {
     ### Curve dataframe
-    ddNULL = data.frame(Time = points, Count = estNULL$fit, Group = "NULL", ID = "NULL")
-    dd0 = data.frame(Time = points, Count = est0$fit, Group = "Fit_0", ID = "Fit_0")
-    dd1 = data.frame(Time = points, Count = est1$fit, Group = "Fit_1", ID = "Fit_1")
+    dd.null = data.frame(Time = points, Count = est.null$fit, Group = "NULL", ID = "NULL")
+    dd.0 = data.frame(Time = points, Count = est.0$fit, Group = "fit.0", ID = "fit.0")
+    dd.1 = data.frame(Time = points, Count = est.1$fit, Group = "fit.1", ID = "fit.1")
     
     ### Confidence interval dataframe
-    ddNULL_U95 = data.frame(Time = points, Count = (estNULL$fit +1.96*estNULL$se), Group = "NULL_U", ID = "NULL_U")
-    ddNULL_L95 = data.frame(Time = points, Count = (estNULL$fit -1.96*estNULL$se), Group = "NULL_L", ID = "NULL_L")
-    dd0_U95 = data.frame(Time = points, Count = (est0$fit +1.96*est0$se), Group = "Fit_0_U", ID = "Fit_0_U")
-    dd0_L95 = data.frame(Time = points, Count = (est0$fit -1.96*est0$se), Group = "Fit_0_L", ID = "Fit_0_L")
-    dd1_U95 = data.frame(Time = points, Count = (est1$fit +1.96*est1$se), Group = "Fit_1_U", ID = "Fit_1_U")
-    dd1_L95 = data.frame(Time = points, Count = (est1$fit -1.96*est1$se), Group = "Fit_1_L", ID = "Fit_1_L")
+    dd.null.u95 = data.frame(Time = points, Count = (est.null$fit + 1.96*est.null$se), Group = "null.u", ID = "null.u")
+    dd.null.l95 = data.frame(Time = points, Count = (est.null$fit - 1.96*est.null$se), Group = "null.l", ID = "null.l")
+    dd.0.u95 = data.frame(Time = points, Count = (est.0$fit + 1.96*est.0$se), Group = "fit.0.u", ID = "fit.0.u")
+    dd.0.u95 = data.frame(Time = points, Count = (est.0$fit - 1.96*est.0$se), Group = "fit.0.l", ID = "fit.0.l")
+    dd.1.u95 = data.frame(Time = points, Count = (est.1$fit + 1.96*est.1$se), Group = "fit.1.u", ID = "fit.1.u")
+    dd.1.l95 = data.frame(Time = points, Count = (est.1$fit - 1.96*est.1$se), Group = "fit.1.l", ID = "fit.1.l")
   } else{
     ### Curve dataframe
-    ddNULL = data.frame(Time = points, Count = modNULL$nu/exp(estNULL$fit), Group = "NULL", ID = "NULL")
-    dd0 = data.frame(Time = points, Count = mod0$nu/exp(est0$fit), Group = "Fit_0", ID = "Fit_0")
-    dd1 = data.frame(Time = points, Count = mod1$nu/exp(est1$fit), Group = "Fit_1", ID = "Fit_1")
+    dd.null = data.frame(Time = points, Count = mod.null$nu/exp(est.null$fit), Group = "null", ID = "null")
+    dd.0 = data.frame(Time = points, Count = mod.0$nu/exp(est.0$fit), Group = "fit.0", ID = "fit.0")
+    dd.1 = data.frame(Time = points, Count = mod.1$nu/exp(est.1$fit), Group = "fit.1", ID = "fit.1")
     
     ### Confidence interval dataframe
-    ddNULL_U95 = data.frame(Time = points, Count = modNULL$nu/exp(estNULL$fit +1.96*estNULL$se), Group = "NULL_U", ID = "NULL_U")
-    ddNULL_L95 = data.frame(Time = points, Count = modNULL$nu/exp(estNULL$fit -1.96*estNULL$se), Group = "NULL_L", ID = "NULL_L")
-    dd0_U95 = data.frame(Time = points, Count = mod0$nu/exp(est0$fit + 1.96*est0$se), Group = "Fit_0_U", ID = "Fit_0_U")
-    dd0_L95 = data.frame(Time = points, Count = mod0$nu/exp(est0$fit - 1.96*est0$se), Group = "Fit_0_L", ID = "Fit_0_L")
-    dd1_U95 = data.frame(Time = points, Count = mod1$nu/exp(est1$fit + 1.96*est1$se), Group = "Fit_1_U", ID = "Fit_1_U")
-    dd1_L95 = data.frame(Time = points, Count = mod1$nu/exp(est1$fit - 1.96*est1$se), Group = "Fit_1_L", ID = "Fit_1_L")
+    dd.null.u95 = data.frame(Time = points, Count = mod.null$nu/exp(est.null$fit +1.96*est.null$se), Group = "null.u", ID = "null.u")
+    dd.null.l95 = data.frame(Time = points, Count = mod.null$nu/exp(est.null$fit -1.96*est.null$se), Group = "null.l", ID = "null.l")
+    dd.0.u95 = data.frame(Time = points, Count = mod.0$nu/exp(est.0$fit + 1.96*est.0$se), Group = "fit.0.u", ID = "fit.0.u")
+    dd.0.l95 = data.frame(Time = points, Count = mod.0$nu/exp(est.0$fit - 1.96*est.0$se), Group = "fit.0.l", ID = "fit.0.l")
+    dd.1.u95 = data.frame(Time = points, Count = mod.1$nu/exp(est.1$fit + 1.96*est.1$se), Group = "fit.1.u", ID = "fit.1.u")
+    dd.1.l95 = data.frame(Time = points, Count = mod.1$nu/exp(est.1$fit - 1.96*est.1$se), Group = "fit.1.l", ID = "fit.1.l")
     
   }
   
   ## Return the results
   if(method != "nbinomial")
   {
-    output = list(F_stat = F_stat, rssNULL = rssNULL, rssFULL = rssFULL, 
-                  ddNULL = ddNULL, dd0 = dd0, dd1 = dd1, modNULL = modNULL, 
-                  mod0 = mod0, mod1 = mod1, ddNULL_U95 = ddNULL_U95, ddNULL_L95= ddNULL_L95,
-                  dd0_U95 = dd0_U95, dd0_L95= dd0_L95, dd1_U95 = dd1_U95, dd1_L95= dd1_L95)
+    output = list(f.stat = f.stat, rss.null = rss.null, rss.full = rss.full, 
+                  dd.null = dd.null, dd.0 = dd.0, dd.1 = dd.1, mod.null = mod.null, 
+                  mod.0 = mod.0, mod.1 = mod.1, dd.null.u95 = dd.null.u95, dd.null.l95 = dd.null.l95,
+                  dd.0.u95 = dd.0.u95, dd.0.l95 = dd.0.l95, dd.1.u95 = dd.1.u95, dd.1.l95= dd.1.l95)
   }
   else
   {
-    output = list(ddNULL = ddNULL, dd0 = dd0, dd1 = dd1, modNULL = modNULL, mod0 = mod0, 
-                  mod1 = mod1, mod0_nbinomial_project = mod0_nbinomial_project, 
-                  mod1_nbinomial_project = mod1_nbinomial_project, 
-                  modNULL_nbinomial_project = modNULL_nbinomial_project,
-                  ddNULL_U95 = ddNULL_U95, ddNULL_L95= ddNULL_L95,
-                  dd0_U95 = dd0_U95, dd0_L95= dd0_L95, dd1_U95 = dd1_U95, dd1_L95= dd1_L95)
+    output = list(dd.null = dd.null, dd.0 = dd.0, dd.1 = dd.1, mod.null = mod.null, mod.0 = mod.0, 
+                  mod.1 = mod.1, mod.0.nbinomial.project = mod.0.nbinomial.project, 
+                  mod.1.nbinomial.project = mod.1.nbinomial.project, 
+                  mod.null.nbinomial.project = mod.null.nbinomial.project,
+                  dd.null.u95 = dd.null.u95, dd.null.l95= dd.null.l95,
+                  dd.0.u95 = dd.0.u95, dd.0.l95= dd.0.l95, dd.1.u95 = dd.1.u95, dd.1.l95= dd.1.l95)
   }
   return(output)
 }
 
 
-#' Calculate Area Ratio of time intervals
+#' Calculate Area Ratio (AR) of each feature's time interval
 #'
-#' Fits longitudinal samples from the same group using nbinomial or LOWESS
+#' Calculate Area Ratio (AR) of each feature's time interval
 #' 
-#' @param curveFit.df gss data object of the fitted spline
+#' @param curve.fit.df gss data object of the fitted spline
 #' @return returns the area ratio for all time intervals
 #' @import caTools
 #' @references
 #' Ahmed Metwally (ametwa2@uic.edu)
 #' @examples 
 #' data(metalonda_test_data)
-#' n.sample = 5 # sample size;
-#' n.timepoints = 10 # time point;
-#' n.group= 2 # number of group;
+#' n.sample = 5
+#' n.timepoints = 10
+#' n.group= 2
 #' Group = factor(c(rep(0,n.sample*n.timepoints), rep(1,n.sample*n.timepoints)))
 #' Time = rep(rep(1:n.timepoints, times = n.sample), 2)
 #' ID = factor(rep(1:(2*n.sample), each = n.timepoints))
 #' points = seq(1, 10, length.out = 10)
-#' aggretage.df = data.frame(Count = metalonda_test_data[1,], Time = Time, Group = Group, ID = ID)
-#' model = curveFitting(df = aggretage.df, log = FALSE, method= "nbinomial", points)
+#' aggregate.df = data.frame(Count = metalonda_test_data[1,], Time = Time, Group = Group, ID = ID)
+#' model = curveFitting(df = aggregate.df, method= "nbinomial", points)
 #' intervalArea(model)
 #' @export
-intervalArea = function(curveFit.df){
-  size = length(curveFit.df$ddNULL$Time)
-  AR = numeric(size - 1)
+intervalArea = function(curve.fit.df){
+  size = length(curve.fit.df$dd.null$Time)
+  ar = numeric(size - 1)
   
   ## Calculate the absoulte and the sign of each interval area
-  AR_abs = numeric(size - 1)
-  AR_sign = numeric(size - 1)
+  ar.abs = numeric(size - 1)
+  ar.sign = numeric(size - 1)
   for(i in 1:(size - 1)){
-    area0 = trapz(curveFit.df$dd0$Time[i:(i+1)], curveFit.df$dd0$Count[i:(i+1)])
-    area1 = trapz(curveFit.df$dd1$Time[i:(i+1)], curveFit.df$dd1$Count[i:(i+1)])
-    areaNULL = trapz(curveFit.df$ddNULL$Time[i:(i+1)], curveFit.df$ddNULL$Count[i:(i+1)])
-    AR[i] = (area0 - area1) / max(area0, area1)
-    AR_abs[i] = abs(AR[i])
-    AR_sign[i] = AR[i]/abs(AR[i])
+    area.0 = trapz(curve.fit.df$dd.0$Time[i:(i+1)], curve.fit.df$dd.0$Count[i:(i+1)])
+    area.1 = trapz(curve.fit.df$dd.1$Time[i:(i+1)], curve.fit.df$dd.1$Count[i:(i+1)])
+    area.null = trapz(curve.fit.df$dd.null$Time[i:(i+1)], curve.fit.df$dd.null$Count[i:(i+1)])
+    
+    ar[i] = (abs(area.0) - abs(area.1)) / max(abs(area.0), abs(area.1))
+    if(is.na(ar[i])){
+     ar[i]=1
+    }
+    ar.abs[i] = abs(ar[i])
+    ar.sign[i] = ar[i]/abs(ar[i])
   }
   
-  return(list(AR = AR, AR_abs = AR_abs, AR_sign = AR_sign))
+  return(list(ar = ar, ar.abs = ar.abs, ar.sign = ar.sign))
 }
 
 
 
-#' Find Significant Time Intervals
+#' Find significant time intervals
 #'
-#' Identify the significant time intervals
+#' Identify significant time intervals
 #' 
-#' @param adjusted_pvalue vector of adjested p-value
-#' @param threshold p_value cut off
+#' @param adjusted.pvalue vector of the adjusted p-value
+#' @param threshold p-value cut off
+#' @param sign vector hold area sign of each time interval 
 #' @return returns a list of the start and end points of all significant time intervals
 #' @references
 #' Ahmed Metwally (ametwa2@uic.edu)
 #' @examples 
-#' p=c(0.04, 0.01, 0.02, 0.04, 0.06, 0.2, 0.06, 0.04)
-#' findSigInterval(p, threshold = 0.05)
+#' p = c(0.04, 0.01, 0.02, 0.04, 0.06, 0.2, 0.06, 0.04)
+#' sign = c(1, 1, 1, 1, -1, -1, 1, 1)
+#' findSigInterval(p, threshold = 0.05, sign)
 #' @export
-findSigInterval = function(adjusted_pvalue, threshold=0.05)
+findSigInterval = function(adjusted.pvalue, threshold = 0.05, sign)
 {
-  sig = which(adjusted_pvalue<threshold)
-  
+  sig = which(adjusted.pvalue < threshold)
+  sign = sign[sig]
+  padj = adjusted.pvalue[sig]
   start = numeric()
   end = numeric()
+  p = numeric()
+  dom = numeric()
   
   if(length(sig) == 0)
   {
@@ -200,46 +198,56 @@ findSigInterval = function(adjusted_pvalue, threshold=0.05)
   {
     start = sig[1]
     end = sig [1]
+    p = padj[1]
+    dom = sign[1]
   }
   else
   {
     start = sig[1]
-
-    if((sig[2] - sig[1]) != 1)
+    
+    if((sig[2] - sig[1]) != 1 | sign[2] != sign[1])
     {
       end = c(end, sig[1])
+      dom = c(dom, sign[1])
+      p = c(p, padj[1])
     }
     
     for(i in 2:length(sig))
     {
       if(i != length(sig))
       {
-        if((sig[i]-sig[i-1]) >1)
+        if((sig[i] - sig[i-1]) > 1 | sign[i] != sign[i-1])
         {
           start= c(start, sig[i])
         }
         
-        if((sig[i+1] - sig[i]) != 1)
+        if((sig[i+1] - sig[i]) != 1 | sign[i+1] != sign[i])
         {
           end = c(end, sig[i])
+          dom = c(dom, sign[i])
+          p = c(p, mean(adjusted.pvalue[start[length(start)] : end[length(end)]]))
         }
       }
       else
       {
-        if((sig[i]-sig[i-1]) > 1)
+        if((sig[i]-sig[i-1]) > 1 | sign[i] != sign[i-1])
         {
           start= c(start, sig[i])
         }
         end= c(end, sig[i])
+        dom = c(dom, sign[i])
+        p = c(p, mean(adjusted.pvalue[start[length(start)] : end[length(end)]]))
       }
     }
   }
   
-  return(list(start = start, end = end))
+  return(list(start = start, end = end, pvalue = p, dominant = dom))
 }
 
 
-#' Calculate Area Ratio of time intervals for all permutations
+
+
+#' Calculate Area Ratio (AR) of each feature's time interval for all permutations
 #'
 #' Fits longitudinal samples from the same group using negative binomial or LOWESS for all permutations
 #' 
@@ -263,12 +271,12 @@ findSigInterval = function(adjusted_pvalue, threshold=0.05)
 #' @export
 areaPermutation = function(perm)
 {
-  AR_list = list()
+  ar.list = list()
   list.len = length(perm)
   for (j in 1:list.len)
   {
-    AR_list[[j]] = intervalArea(perm[[j]])
+    ar.list[[j]] = intervalArea(perm[[j]])
   }
   
-  return(AR_list)
+  return(ar.list)
 }

@@ -1,20 +1,20 @@
 #' Metagenomic Longitudinal Differential Abundant Analysis for one feature
 #'
-#' Find significant time interval of the tested feature
+#' Find significant time intervals of the feature
 #' 
-#' @param Count Count of feature for all groups for all time points for all samples.
-#' @param Time Time label of all samples.
-#' @param Group Group label of all samples.
-#' @param ID individual ID label for samples.
+#' @param Count matrix has the number of reads that mapped to each feature in each sample.
+#' @param Time vector of the time label of each sample.
+#' @param Group vector of the group label of each sample.
+#' @param ID vector of the subject ID label of each sample.
 #' @param n.perm number of permutations.
-#' @param log log transformation of the data.
-#' @param fit.method The fitting method (NB, LOWESS).
-#' @param points The points at which the prediction should happen.
+#' @param fit.method fitting method (NB, LOWESS).
+#' @param points points at which the prediction should happen.
 #' @param text Feature's name.
-#' @param parall Logic to indicate whether to use multicore.
-#' @param pvalue_threshold p_value threshold cutoff.
-#' @param adjust.method multiple testing correction methods.
-#' @return Returns a list of the significant time intervals for the tested feature.
+#' @param parall boolean to indicate whether to use multicore.
+#' @param pvalue.threshold p-value threshold cutoff for identifing significant time intervals.
+#' @param adjust.method multiple testing correction method.
+#' @param time.unit time unit used in the Time vector (days, weeks, months, etc.)
+#' @return eeturns a list of the significant time intervals for the tested feature.
 #' @import parallel
 #' @import doParallel
 #' @import stats
@@ -30,70 +30,71 @@
 #' ID = factor(rep(1:(2*n.sample), each = n.timepoints))
 #' points = seq(1, 10, length.out = 10)
 #' output_1_nbinomial = metalonda(Count = metalonda_test_data[1,], Time = Time, Group = Group,
-#' ID = ID, log = log, fit.method =  "nbinomial", n.perm = 10, points = points,
-#' text=rownames(metalonda_test_data)[1], parall = FALSE, pvalue_threshold=0.05, adjust.method="BH")
+#' ID = ID, fit.method =  "nbinomial", n.perm = 10, points = points,
+#' text=rownames(metalonda_test_data)[1], parall = FALSE, pvalue.threshold=0.05, adjust.method="BH")
 #' @export
-metalonda = function(Count, Time, Group, ID, 
-                      n.perm = 10, log = FALSE, fit.method = "nbinomial", 
-                      points, text = 0, parall = FALSE, pvalue_threshold=0.05, 
-                      adjust.method = "BH")
+metalonda = function(Count, Time, Group, ID, n.perm = 500, fit.method = "nbinomial", 
+                      points, text = 0, parall = FALSE, pvalue.threshold = 0.05, 
+                      adjust.method = "BH", time.unit = "days")
 {
   cat("Start MetaLonDA \n")
-  
-  group_levels = sort(unique(Group))
-  if(length(group_levels) > 2){
+
+  # Extract groups
+  group.levels = sort(unique(Group))
+  if(length(group.levels) > 2){
     stop("You have more than two phenotypes.")
   }
-  gr1 = group_levels[1]
-  gr2 = group_levels[2]
-  Group[which(Group == gr1)] = 0
-  Group[which(Group == gr2)] = 1
+  gr.1 = group.levels[1]
+  gr.2 = group.levels[2]
+  Group[which(Group == gr.1)] = 0
+  Group[which(Group == gr.2)] = 1
   
   
-  aggretage.df = data.frame(Count = Count, Time = Time, Group = Group, ID = ID)
+  ## Form MetaLonDA dataframe
+  aggregate.df = data.frame(Count = Count, Time = Time, Group = Group, ID = ID)
+  
 
-  # cat("Visualize feature's trajectories \n")
-  visualizeFeature(aggretage.df, text, group_levels)
+  # Visualize feature's abundance accross different time points  
+  visualizeFeature(aggregate.df, text, group.levels, unit = time.unit)
 
 
   
-  group0 = aggretage.df[aggretage.df$Group == 0, ]
-  group1 = aggretage.df[aggretage.df$Group == 1, ]
-  points_min = max(sort(group0$Time)[1], sort(group1$Time)[1])
-  points_max = min(sort(group0$Time)[length(group0$Time)], sort(group1$Time)[length(group1$Time)])
-  points = points[which(points>=points_min & points<=points_max)]
+  group.0 = aggregate.df[aggregate.df$Group == 0, ]
+  group.1 = aggregate.df[aggregate.df$Group == 1, ]
+  points.min = max(sort(group.0$Time)[1], sort(group.1$Time)[1])
+  points.max = min(sort(group.0$Time)[length(group.0$Time)], sort(group.1$Time)[length(group.1$Time)])
+  points = points[which(points >= points.min & points <= points.max)]
   
 
+
+  
   cat("Start Curve Fitting \n") 
   if (fit.method == "ss")
   {
     cat("Fitting: Gaussian SS \n") 
-    model= curveFitting(df = aggretage.df, log = FALSE, method= "ss", points)
-  }
-  
-  else if (fit.method == "lowess")
+    model= curveFitting(df = aggregate.df, method= "ss", points)
+  }  else if (fit.method == "lowess")
   {
     cat("Fitting: LOWESS \n")
-    model = curveFitting(df = aggretage.df, log = FALSE, method= "lowess", points)
-  }
-
-  else if (fit.method == "nbinomial")
+    model = curveFitting(df = aggregate.df, method= "lowess", points)
+  } else if (fit.method == "nbinomial")
   {
     cat("Fitting: NB SS \n")
-    model = tryCatch(curveFitting(df = aggretage.df, log = FALSE, method= "nbinomial", points),
-             error = function(e) {print(paste("ERROR in gss")); return("ERROR")})
-    # if(model=="ERROR")
-    #   return("ERROR")
+    model = tryCatch({
+      curveFitting(df = aggregate.df, method= "nbinomial", points)
+      },  error = function(err) {
+        print(paste("ERROR in gss = ", err, sep="")); 
+        return("ERROR")
+        })
   }
   
-  # cat("Visualize feature's trajectories spline \n")
-  # visualizeFeatureSpline(aggretage.df, model, fit.method, text, group_levels)
+  # Visualize feature's trajectories spline
+  visualizeFeatureSpline(aggregate.df, model, fit.method, text, group.levels, unit = time.unit)
  
    
-  ## Calculate area under the curve for each time interval
-  cat("Calculate Are of each Unit Interval \n")
+  ## Calculate area under the fitted curve for each time interval
+  cat("Calculate area under the fitted curves \n")
   area = intervalArea(model)
-  
   
   
   ### Run in Parallel
@@ -107,94 +108,162 @@ metalonda = function(Count, Time, Group, ID,
   
   ## Permutation 
   cat("Start Permutation \n")
-  perm  = permutation(aggretage.df, n.perm, fit.method, points)
+  perm  = permutation(aggregate.df, n.perm, fit.method, points, lev = group.levels)
   
+  ### Area p-value per unit interval
+  area.perm = areaPermutation(perm)
 
-  ### Area P-value per unit interval
-  area_perm = areaPermutation(perm)
 
   if(parall == TRUE) {
     stopCluster(cl)
   } 
   
-  
-  a1 = do.call(rbind, area_perm)
+  a1 = do.call(rbind, area.perm)
   a2 = do.call(rbind, a1[,2])
 
-  ## Histogram for one area interval
-  ## visualizeARHistogram(a2, text)
+  ##  Visualize AR empirical distribution
+  visualizeARHistogram(a2, text, fit.method)
   
-  ## Calculate area p-value 
-  pvalue_area = sapply(1:(length(points)-1), function(i){
-    sum(a2[,i] >= area$AR_abs[i])/length(a2[,i])
+  ## Calculate AR p-value 
+  pvalue.area = sapply(1:(length(points)-1), function(i){
+    sum(a2[,i] >= area$ar.abs[i])/length(a2[,i])
   } )
 
-  # cat("pvalue_area= ")
-  # print(pvalue_area)
-  # cat("\n")
 
-  ## Visualize sigificant area
-	cat("P_value adjustment method = ", adjust.method, "\n")
-  adjusted_pvalue = p.adjust(pvalue_area, method = adjust.method)
-  interval = findSigInterval(adjusted_pvalue, threshold = pvalue_threshold)
 
+  ### Identify significant time inetrval based on the adjusted p-value 
+  cat("p-value adjustment method = ", adjust.method, "\n")
+  adjusted.pvalue = p.adjust(pvalue.area, method = adjust.method)
+  interval = findSigInterval(adjusted.pvalue, threshold = pvalue.threshold, sign = area$ar.sign)
   st = points[interval$start]
   en = points[interval$end + 1]
   
-  if(length(st)>0)
+  
+  if(length(st) > 0)
   {
-    visualizeArea(aggretage.df, model, fit.method, st, en, text, group_levels)
+    ## Visualize sigificant area
+    visualizeArea(aggregate.df, model, fit.method, st, en, text, group.levels, unit = time.unit)
   }
   
   cat("\n\n")
   
-  output_details = list(feature = text, significant_interval=cbind(start = st, end = en), 
-       intervals_pvalue=pvalue_area, adjusted_pvalue = adjusted_pvalue, areaSign = area$AR_sign)
-  output_summary = data.frame(feature=rep(output_details$feature, nrow(output_details$significant_interval)), 
-                 output_details$significant_interval, 
-                 dominant = output_details$areaSign[output_details$significant_interval[,1]])
+  output.details = list(feature = text, significant.interval = cbind(start = st, end = en), 
+       intervals.pvalue = pvalue.area, adjusted.pvalue = adjusted.pvalue, area.sign = area$ar.sign)
+  output.summary = data.frame(feature = rep(text, length(interval$start)), start = st, end = en,
+                 dominant = interval$dominant, pvalue = interval$pvalue)
   
-  return(list(detailed = output_details, summary = output_summary))
+  return(list(detailed = output.details, summary = output.summary))
 }
 
 
-#' Metagenomic Longitudinal Differential Abundant Analysis for all features
+#' Metagenomic Longitudinal Differential Abundance Analysis for all Features
 #'
-#' Find significant features and their time interval
+#' Identify significant features and their significant time interval
 #' 
-#' @param data Count matrix of all features
+#' @param Count Count matrix of all features
 #' @param Time Time label of all samples
 #' @param Group Group label of all samples
 #' @param ID individual ID label for samples
 #' @param n.perm number of permutations
-#' @param log log transformation of the data
 #' @param fit.method The fitting method (NB, LOWESS)
-#' @param points The points at which the prediction should happen
+#' @param num.intervals The number of time intervals at which metalonda test differential abundance 
 #' @param parall logic to indicate whether to use multicore
-#' @param pvalue_threshold p-value threshold cutoff
+#' @param pvalue.threshold p-value threshold cutoff
 #' @param adjust.method Multiple testing correction methods
+#' @param time.unit time unit used in the Time vector (days, weeks, months, etc.)
+#' @param norm.method normalization method to be used to normalize count matrix (CSS, median-ratio, etc.) 
+#' @param prefix prefix for the output figure
 #' @return Returns a list of the significant features a long with their significant time intervals
 #' @references
 #' Ahmed Metwally (ametwa2@uic.edu)
 #' @export
-metalondaAll = function(data, Time, Group, ID, n.perm = 10, log = FALSE, 
-                         fit.method = "nbinomial", points, parall = FALSE, 
-                         pvalue_threshold =0.05, adjust.method = "BH")
+metalondaAll = function(Count, Time, Group, ID, n.perm = 500,
+                         fit.method = "nbinomial", num.intervals = 100, parall = FALSE, 
+                         pvalue.threshold = 0.05, adjust.method = "BH", time.unit = "days", 
+                         norm.method = "none", prefix = "Output")
 {
-  n.features = nrow(data)
+  ### Check the dimentions of the annotation vectors and count matrix
+  if(length(Time) == length(ID))
+  {
+    if(ncol(Count) == length(Group))
+    {
+      if(length(Time) == length(Group))
+      {
+        cat("dimentionality check passed")
+      } else
+      {
+        stop("The length of the annotation vectors don't match or not consistent 
+             with the number of columns of the count matrix.")
+      }
+    } else
+    {
+      stop("The length of the annotation vectors don't match or not consistent 
+           with the number of columns of the count matrix.")
+    }
+  } else
+  {
+    stop("The length of the annotation vectors don't match or not consistent 
+         with the number of columns of the count matrix.")
+  }
+  
+  
+  ## Normalization
+  if(norm.method != "none")
+  {
+    if(norm.method == "css" | norm.method == "tmm" | norm.method == "ra" | norm.method == "log10" | norm.method == "median-ratio")
+    {
+      cat("Normalizaton method = ", norm.method, "\n")
+      Count = normalize(Count, method = norm.method)
+    } else{
+      stop("You have entered a wrong normalization method")
+    }
+  }
+  
+  ### Specify the test/prediction timepoints for metalonda
+  if(num.intervals == "none")
+    points = floor(seq(min(Time), max(Time)))
+  else
+    points = floor(seq(min(Time), max(Time), length.out = num.intervals + 1))
+  
+
+  
+  ## Filter out the taxa that always have zero of one/both group
+  group.levels = sort(unique(Group))
+  if(length(group.levels) > 2){
+    stop("You have more than two phenotypes.")
+  }
+  gr.1 = group.levels[1]
+  gr.2 = group.levels[2]
+  
+  q = Count[,which(ID %in% ID[which(Group == gr.1)])]
+  w = Count[,which(ID %in% ID[which(Group == gr.2)])]
+  data.count.filt = Count[-which(apply(q, 1, sum) == 0 | apply(w, 1, sum) == 0), ]
+  data.count.filt = as.matrix(data.count.filt)
+  
+  
+  
+  #### Apply metalonda for each feature
+  n.features = nrow(data.count.filt)
   detailed = list()
   summary = list()
   for (i in 1:n.features)
   {
-    cat ("Feature  = ", rownames(data)[i], "\n")
-    out = metalonda(Count = data[i,], Time = Time, Group = Group, ID = ID, log = log, 
+    cat ("Feature  = ", rownames(data.count.filt)[i], "\n")
+    out = metalonda(Count = data.count.filt[i,], Time = Time, Group = Group, ID = ID,
                           fit.method = fit.method, n.perm = n.perm, points = points, 
-                          text=rownames(data)[i], parall = parall, pvalue_threshold, adjust.method)
+                          text=rownames(data.count.filt)[i], parall = parall, pvalue.threshold, adjust.method, time.unit)
     
     detailed[[i]] = out$detailed
     summary[[i]] = out$summary
   }
   
-  summary_tmp = do.call(rbind, summary)
-  return(list(output_detail = detailed, output_summary = summary_tmp))
+  summary.tmp = do.call(rbind, summary)
+  summary.tmp$dominant[which(summary.tmp$dominant == 1)] = gr.1
+  summary.tmp$dominant[which(summary.tmp$dominant == -1)] = gr.2
+  
+  ## Output table and figure that summarize the significant time intervals
+  write.csv(summary.tmp, file = sprintf("%s_MetaLonDA_p%s.csv", prefix, n.perm), row.names = FALSE)
+  visualizeTimeIntervals(interval.details = summary.tmp, prefix)
+  
+  return(list(output.detail = detailed, output.summary = summary.tmp))
 }

@@ -2,32 +2,33 @@
 % Please edit documentation in R/CurveFitting.R
 \name{intervalArea}
 \alias{intervalArea}
-\title{Calculate Area Ratio of time intervals}
+\title{Calculate Area Ratio (AR) of each feature's time interval}
 \usage{
-intervalArea(curveFit.df)
+intervalArea(curve.fit.df)
 }
 \arguments{
-\item{curveFit.df}{gss data object of the fitted spline}
+\item{curve.fit.df}{gss data object of the fitted spline}
 }
 \value{
 returns the area ratio for all time intervals
 }
 \description{
-Fits longitudinal samples from the same group using nbinomial or LOWESS
+Calculate Area Ratio (AR) of each feature's time interval
 }
 \examples{
 data(metalonda_test_data)
-n.sample = 5 # sample size;
-n.timepoints = 10 # time point;
-n.group= 2 # number of group;
+n.sample = 5
+n.timepoints = 10
+n.group= 2
 Group = factor(c(rep(0,n.sample*n.timepoints), rep(1,n.sample*n.timepoints)))
 Time = rep(rep(1:n.timepoints, times = n.sample), 2)
 ID = factor(rep(1:(2*n.sample), each = n.timepoints))
 points = seq(1, 10, length.out = 10)
-aggretage.df = data.frame(Count = metalonda_test_data[1,], Time = Time, Group = Group, ID = ID)
-model = curveFitting(df = aggretage.df, log = FALSE, method= "nbinomial", points)
+aggregate.df = data.frame(Count = metalonda_test_data[1,], Time = Time, Group = Group, ID = ID)
+model = curveFitting(df = aggregate.df, method= "nbinomial", points)
 intervalArea(model)
 }
 \references{
 Ahmed Metwally (ametwa2@uic.edu)
 }
+

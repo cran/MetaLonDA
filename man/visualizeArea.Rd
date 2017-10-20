@@ -4,12 +4,13 @@
 \alias{visualizeArea}
 \title{Visualize significant time interval}
 \usage{
-visualizeArea(aggretage.df, model_ss, method, start, end, text, group_levels)
+visualizeArea(aggregate.df, model.ss, method, start, end, text, group.levels,
+  unit = "days")
 }
 \arguments{
-\item{aggretage.df}{Dataframe has the Count , Group, ID, Time}
+\item{aggregate.df}{Dataframe has the Count, Group, ID, Time}
 
-\item{model_ss}{The fitted model}
+\item{model.ss}{The fitted model}
 
 \item{method}{Fitting method (negative binomial or LOWESS)}
 
@@ -19,11 +20,14 @@ visualizeArea(aggretage.df, model_ss, method, start, end, text, group_levels)
 
 \item{text}{Feature name}
 
-\item{group_levels}{Level's name}
+\item{group.levels}{Level's name}
+
+\item{unit}{time unit used in the Time vector (days, weeks, months, etc.)}
 }
 \description{
-It highlights the significant tiem intervals
+Visualize significant time interval
 }
 \references{
 Ahmed Metwally (ametwa2@uic.edu)
 }
+

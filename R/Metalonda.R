@@ -43,19 +43,33 @@ metalonda = function(Count, Time, Group, ID, n.perm = 500, fit.method = "nbinomi
   cat("Start MetaLonDA \n")
 
   # Extract groups
+  Group = as.character(Group)
   group.levels = sort(unique(Group))
+
+  
+  
   if(length(group.levels) > 2){
     stop("You have more than two phenotypes.")
+  } else if(length(group.levels) < 2){
+    stop("You have less than two phenotypes.")
   }
-  gr.1 = group.levels[1]
-  gr.2 = group.levels[2]
+
+  
+  gr.1 = as.character(group.levels[1])
+  gr.2 = as.character(group.levels[2])
+
   Group[which(Group == gr.1)] = 0
   Group[which(Group == gr.2)] = 1
+
   
+  
+  ## Preprocessing: add pseudo counts for zero abudnance features
+  Count = Count + 1e-8
+
   
   ## Form MetaLonDA dataframe
   aggregate.df = data.frame(Count = Count, Time = Time, Group = Group, ID = ID)
-  
+
 
   ## Visualize feature's abundance accross different time points  
   visualizeFeature(aggregate.df, text, group.levels, unit = time.unit)
@@ -245,11 +259,12 @@ metalondaAll = function(Count, Time, Group, ID, n.perm = 500,
     #points = floor(seq(min(Time), max(Time), length.out = num.intervals + 1))
     points = seq(min(Time), max(Time), length.out = num.intervals + 1)
   
-  cat("Points = ")
+  cat("Prediction Points = ")
   print(points)
   cat("\n")
   
   ## Filter out the taxa that always have zero of one/both group
+  Group = as.character(Group)
   group.levels = sort(unique(Group))
   if(length(group.levels) > 2){
     stop("You have more than two phenotypes.")
@@ -257,19 +272,24 @@ metalondaAll = function(Count, Time, Group, ID, n.perm = 500,
   gr.1 = group.levels[1]
   gr.2 = group.levels[2]
   
-  q = Count[,which(ID %in% ID[which(Group == gr.1)])]
-  w = Count[,which(ID %in% ID[which(Group == gr.2)])]
-  rm = which(apply(q, 1, sum) == 0 | apply(w, 1, sum) == 0)
   
-  if(length(rm) == 0)
-  {
-    data.count.filt = Count
-  } else
-  {
-    data.count.filt = Count[-rm, ]
-  }
   
-  data.count.filt = as.matrix(data.count.filt)
+  # ## Preprocessing: Remove features that have zeros in all time points of one group 
+  # q = Count[,which(ID %in% ID[which(Group == gr.1)])]
+  # w = Count[,which(ID %in% ID[which(Group == gr.2)])]
+  # rm = which(apply(q, 1, sum) == 0 | apply(w, 1, sum) == 0)
+  # 
+  # if(length(rm) == 0)
+  # {
+  #   data.count.filt = Count
+  # } else
+  # {
+  #   data.count.filt = Count[-rm, ]
+  # }
+  # 
+  # data.count.filt = as.matrix(data.count.filt)
+  
+  data.count.filt = as.matrix(Count)
   
   
   

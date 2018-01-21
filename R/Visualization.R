@@ -64,7 +64,7 @@ visualizeFeature = function (df, text, group.levels, unit = "days")
 #' @export
 visualizeFeatureSpline = function (df, model, method, text, group.levels, unit = "days")
 { 
-  cat("Visualizing the Splines of Feature = ", text, "\n")
+  cat("Visualizing Splines of Feature = ", text, "\n")
     
   Count=0;Time=0;ID=0;Group=0;lnn=0 ## This line is just to pass the CRAN checks for the aes in ggplot2
   dd.null = model$dd.null
@@ -216,7 +216,7 @@ visualizeTimeIntervals = function(interval.details, prefix = "MetaLonDA_timeline
   
   ggplot(interval.details, aes(ymin = start , ymax = end, x = feature, xend = feature)) + 
     geom_linerange(aes(color = dominant), size = 1) + 
-    coord_flip() +  scale_colour_manual(values=c("firebrick", "blue")) +
+    coord_flip() +  scale_colour_manual(values=c("blue", "firebrick")) +
     labs(x = "Feature", y = sprintf("Time (%s)", unit), colour="Dominant") + 
      theme(axis.text.x = element_text(colour = "black", size = 10, angle = 0, hjust = 0.5, vjust = 0.5, face = "bold"),
            axis.text.y = element_text(colour = "black", size = 8, angle = 0, vjust = 0.5, face = "bold"),

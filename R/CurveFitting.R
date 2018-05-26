@@ -3,7 +3,7 @@
 #' Fits longitudinal samples from the same group using negative binomial smoothing splines or LOWESS
 #' 
 #' @param df dataframe has the Count, Group, ID, Time
-#' @param method fitting method (negative binomial, LOWESS)
+#' @param method fitting method (nbinomial, lowess)
 #' @param points points at which the prediction should happen
 #' @return returns the fitted model
 #' @import gss
@@ -76,7 +76,7 @@ curveFitting = function(df, method = "nbinomial", points){
     dd.null.u95 = data.frame(Time = points, Count = (est.null$fit + 1.96*est.null$se), Group = "null.u", ID = "null.u")
     dd.null.l95 = data.frame(Time = points, Count = (est.null$fit - 1.96*est.null$se), Group = "null.l", ID = "null.l")
     dd.0.u95 = data.frame(Time = points, Count = (est.0$fit + 1.96*est.0$se), Group = "fit.0.u", ID = "fit.0.u")
-    dd.0.u95 = data.frame(Time = points, Count = (est.0$fit - 1.96*est.0$se), Group = "fit.0.l", ID = "fit.0.l")
+    dd.0.l95 = data.frame(Time = points, Count = (est.0$fit - 1.96*est.0$se), Group = "fit.0.l", ID = "fit.0.l")
     dd.1.u95 = data.frame(Time = points, Count = (est.1$fit + 1.96*est.1$se), Group = "fit.1.u", ID = "fit.1.u")
     dd.1.l95 = data.frame(Time = points, Count = (est.1$fit - 1.96*est.1$se), Group = "fit.1.l", ID = "fit.1.l")
   } else{

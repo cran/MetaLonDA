@@ -20,7 +20,7 @@ metalondaAll(Count, Time, Group, ID, n.perm = 500, fit.method = "nbinomial",
 
 \item{n.perm}{number of permutations}
 
-\item{fit.method}{The fitting method (NB, LOWESS)}
+\item{fit.method}{The fitting method (nbinomial, lowess)}
 
 \item{num.intervals}{The number of time intervals at which metalonda test differential abundance}
 

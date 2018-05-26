@@ -9,7 +9,7 @@ curveFitting(df, method = "nbinomial", points)
 \arguments{
 \item{df}{dataframe has the Count, Group, ID, Time}
 
-\item{method}{fitting method (negative binomial, LOWESS)}
+\item{method}{fitting method (nbinomial, lowess)}
 
 \item{points}{points at which the prediction should happen}
 }

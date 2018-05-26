@@ -7,7 +7,7 @@
 #' @param Group vector of the group label of each sample.
 #' @param ID vector of the subject ID label of each sample.
 #' @param n.perm number of permutations.
-#' @param fit.method fitting method (NB, LOWESS).
+#' @param fit.method fitting method (nbinomial, lowess).
 #' @param points points at which the prediction should happen.
 #' @param text Feature's name.
 #' @param parall boolean to indicate whether to use multicore.
@@ -86,11 +86,12 @@ metalonda = function(Count, Time, Group, ID, n.perm = 500, fit.method = "nbinomi
 
   
   cat("Start Curve Fitting \n") 
-  if (fit.method == "ss")
-  {
-    cat("Fitting: Gaussian SS \n") 
-    model= curveFitting(df = aggregate.df, method= "ss", points)
-  }  else if (fit.method == "lowess")
+  #if (fit.method == "ss")
+  #{
+  #  cat("Fitting: Gaussian SS \n") 
+  #  model= curveFitting(df = aggregate.df, method= "ss", points)
+  #}  else if (fit.method == "lowess")
+  if (fit.method == "lowess")
   {
     cat("Fitting: LOWESS \n")
     model = curveFitting(df = aggregate.df, method= "lowess", points)
@@ -103,6 +104,10 @@ metalonda = function(Count, Time, Group, ID, n.perm = 500, fit.method = "nbinomi
         print(paste("ERROR in gss = ", err, sep="")); 
         return("ERROR")
         })
+  } else {
+    cat("You have entered unsupported fitting method\n")
+    quit()
+    
   }
   
   ## Visualize feature's trajectories spline
@@ -182,7 +187,7 @@ metalonda = function(Count, Time, Group, ID, n.perm = 500, fit.method = "nbinomi
 #' @param Group Group label of all samples
 #' @param ID individual ID label for samples
 #' @param n.perm number of permutations
-#' @param fit.method The fitting method (NB, LOWESS)
+#' @param fit.method The fitting method (nbinomial, lowess)
 #' @param num.intervals The number of time intervals at which metalonda test differential abundance 
 #' @param parall logic to indicate whether to use multicore
 #' @param pvalue.threshold p-value threshold cutoff

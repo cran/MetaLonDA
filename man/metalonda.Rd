@@ -19,7 +19,7 @@ metalonda(Count, Time, Group, ID, n.perm = 500, fit.method = "nbinomial",
 
 \item{n.perm}{number of permutations.}
 
-\item{fit.method}{fitting method (NB, LOWESS).}
+\item{fit.method}{fitting method (nbinomial, lowess).}
 
 \item{points}{points at which the prediction should happen.}
 

@@ -32,5 +32,5 @@ aggretage.df = data.frame(Count = metalonda_test_data[1,], Time = Time, Group = 
 cf = curveFitting(df = aggretage.df, method= "nbinomial", points)
 }
 \references{
-Ahmed Metwally (ametwa2@uic.edu)
+Ahmed Metwally (ametwall@stanford.edu)
 }

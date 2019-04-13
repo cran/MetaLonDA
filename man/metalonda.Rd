@@ -4,9 +4,11 @@
 \alias{metalonda}
 \title{Metagenomic Longitudinal Differential Abundance Analysis for one feature}
 \usage{
-metalonda(Count, Time, Group, ID, n.perm = 500, fit.method = "nbinomial",
-  points, text = 0, parall = FALSE, pvalue.threshold = 0.05,
-  adjust.method = "BH", time.unit = "days")
+metalonda(Count, Time, Group, ID, n.perm = 500,
+  fit.method = "nbinomial", points, text = 0, parall = FALSE,
+  pvalue.threshold = 0.05, adjust.method = "BH", time.unit = "days",
+  ylabel = "Normalized Count", col = c("blue", "firebrick"),
+  prefix = "Test")
 }
 \arguments{
 \item{Count}{matrix has the number of reads that mapped to each feature in each sample.}
@@ -32,6 +34,12 @@ metalonda(Count, Time, Group, ID, n.perm = 500, fit.method = "nbinomial",
 \item{adjust.method}{multiple testing correction method.}
 
 \item{time.unit}{time unit used in the Time vector (hours, days, weeks, months, etc.)}
+
+\item{ylabel}{text to be shown on the y-axis of all generated figures (default: "Normalized Count")}
+
+\item{col}{two color to be used for the two groups (eg., c("red", "blue")).}
+
+\item{prefix}{prefix to be used to create directory for the analysis results}
 }
 \value{
 returns a list of the significant time intervals for the tested feature.
@@ -51,10 +59,10 @@ points = seq(1, 10, length.out = 10)
 \dontrun{
 output.nbinomial = metalonda(Count = metalonda_test_data[1,], Time = Time, Group = Group,
 ID = ID, fit.method =  "nbinomial", n.perm = 10, points = points,
-text = rownames(metalonda_test_data)[1], parall = FALSE, pvalue.threshold = 0.05,
-adjust.method = "BH")
+text = rownames(metalonda_test_data)[1], parall = FALSE, pvalue.threshold = 0.05, 
+adjust.method = "BH", time.unit = "hours", ylabel = "Normalized Count", col = c("black", "green"))
 }
 }
 \references{
-Ahmed Metwally (ametwa2@uic.edu)
+Ahmed Metwally (ametwall@stanford.edu)
 }
